@@ -1,7 +1,6 @@
 # from fchollet: https://keras.io/examples/generative/vae/
 
 import tensorflow as tf
-import keras
 from keras import layers
 
 class Sampling(layers.Layer):

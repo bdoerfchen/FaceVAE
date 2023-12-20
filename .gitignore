@@ -1,6 +1,10 @@
 # virtual environments
 .venv*/
 
+# ignore all platform datasets and saved models
+datasets/*/
+*.keras
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

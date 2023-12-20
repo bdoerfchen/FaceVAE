@@ -3,15 +3,19 @@ import keras
 import tensorflow as tf
 
 class VAE(keras.Model):
-    def __init__(self, encoder, decoder, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, encoder: keras.Model, decoder: keras.Model, **kwargs):
+        super().__init__(kwargs)
         self.encoder = encoder
         self.decoder = decoder
+
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
         self.reconstruction_loss_tracker = keras.metrics.Mean(
             name="reconstruction_loss"
         )
         self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
+
+    def __call__(self, *args, **kwargs):
+        return self.decoder(self.encoder(args))
 
     @property
     def metrics(self):
