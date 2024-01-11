@@ -16,6 +16,7 @@ class DatasetProvider:
     class AvailableDatasets:
         COLORFERET = DatasetSchema("feret", (384, 256))
         FFHQ256 = DatasetSchema("ffhq256", (256, 256))
+        TEST = DatasetSchema("test", (384, 256))
         
 
     def getPath(dataset: AvailableDatasets):
