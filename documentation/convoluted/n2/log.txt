@@ -1,0 +1,124 @@
+2024-01-18 19:24:31.027413: I external/local_tsl/tsl/platform/default/subprocess.cc:304] Start cannot spawn child process: No such file or directory
+Model: "encoder_model"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ encoder_input (InputLayer)  [(None, 384, 256, 3)]        0         []                            
+                                                                                                  
+ conv2d (Conv2D)             (None, 192, 128, 8)          224       ['encoder_input[0][0]']       
+                                                                                                  
+ conv2d_1 (Conv2D)           (None, 96, 64, 16)           3216      ['conv2d[0][0]']              
+                                                                                                  
+ flatten (Flatten)           (None, 98304)                0         ['conv2d_1[0][0]']            
+                                                                                                  
+ encoder_prelatent (Dense)   (None, 60)                   5898300   ['flatten[0][0]']             
+                                                                                                  
+ encoder_mean (Dense)        (None, 15)                   915       ['encoder_prelatent[0][0]']   
+                                                                                                  
+ encoder_log_variance (Dens  (None, 15)                   915       ['encoder_prelatent[0][0]']   
+ e)                                                                                               
+                                                                                                  
+==================================================================================================
+Total params: 5903570 (22.52 MB)
+Trainable params: 5903570 (22.52 MB)
+Non-trainable params: 0 (0.00 Byte)
+__________________________________________________________________________________________________
+Model: "decoder_model"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ decoder_input (InputLayer)  [(None, 15)]              0         
+                                                                 
+ decoder_postlatent (Dense)  (None, 60)                960       
+                                                                 
+ decoder_latent_redense (De  (None, 98304)             5996544   
+ nse)                                                            
+                                                                 
+ reshape (Reshape)           (None, 96, 64, 16)        0         
+                                                                 
+ conv2d_transpose (Conv2DTr  (None, 192, 128, 16)      6416      
+ anspose)                                                        
+                                                                 
+ conv2d_transpose_1 (Conv2D  (None, 384, 256, 8)       1160      
+ Transpose)                                                      
+                                                                 
+ conv2d_transpose_2 (Conv2D  (None, 384, 256, 3)       219       
+ Transpose)                                                      
+                                                                 
+=================================================================
+Total params: 6005299 (22.91 MB)
+Trainable params: 6005299 (22.91 MB)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________
+Model: "VAE"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ encoder_input (InputLayer)  [(None, 384, 256, 3)]        0         []                            
+                                                                                                  
+ encoder_model (Functional)  [(None, 15),                 5903570   ['encoder_input[0][0]']       
+                              (None, 15)]                                                         
+                                                                                                  
+ vae_latent_sampled (VAESam  (None, 15)                   0         ['encoder_model[0][0]',       
+ plingLayer)                                                         'encoder_model[0][1]']       
+                                                                                                  
+ decoder_model (Functional)  (None, 384, 256, 3)          6005299   ['vae_latent_sampled[0][0]']  
+                                                                                                  
+ mse_vae_output (MSEReconst  (None, 384, 256, 3)          0         ['encoder_input[0][0]',       
+ ructionLossLayer)                                                   'decoder_model[0][0]']       
+                                                                                                  
+==================================================================================================
+Total params: 11908869 (45.43 MB)
+Trainable params: 11908869 (45.43 MB)
+Non-trainable params: 0 (0.00 Byte)
+__________________________________________________________________________________________________
+Epoch 1/20
+2024-01-18 19:24:38.010026: I external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:454] Loaded cuDNN version 8904
+2024-01-18 19:24:39.423203: I external/local_tsl/tsl/platform/default/subprocess.cc:304] Start cannot spawn child process: No such file or directory
+2024-01-18 19:24:42.156932: I external/local_xla/xla/service/service.cc:168] XLA service 0x7fc7b80f5dc0 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2024-01-18 19:24:42.156997: I external/local_xla/xla/service/service.cc:176]   StreamExecutor device (0): NVIDIA GeForce GTX 1660 SUPER, Compute Capability 7.5
+2024-01-18 19:24:42.161998: I tensorflow/compiler/mlir/tensorflow/utils/dump_mlir_util.cc:269] disabling MLIR crash reproducer, set env var `MLIR_CRASH_REPRODUCER_DIRECTORY` to enable.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1705602282.243834   32097 device_compiler.h:186] Compiled cluster using XLA!  This line is logged at most once for the lifetime of the process.
+355/355 [==============================] - 48s 100ms/step - loss: 3377.6511
+Epoch 2/20
+355/355 [==============================] - 82s 223ms/step - loss: 1737.2289
+Epoch 3/20
+355/355 [==============================] - 115s 313ms/step - loss: 1449.6814
+Epoch 4/20
+355/355 [==============================] - 127s 350ms/step - loss: 1324.0903
+Epoch 5/20
+355/355 [==============================] - 61s 162ms/step - loss: 1241.4232
+Epoch 6/20
+355/355 [==============================] - 42s 109ms/step - loss: 1181.6578
+Epoch 7/20
+355/355 [==============================] - 105s 287ms/step - loss: 1138.7534
+Epoch 8/20
+355/355 [==============================] - 124s 341ms/step - loss: 1103.3597
+Epoch 9/20
+355/355 [==============================] - 37s 95ms/step - loss: 1076.6576
+Epoch 10/20
+355/355 [==============================] - 36s 93ms/step - loss: 1054.3723
+Epoch 11/20
+355/355 [==============================] - 73s 199ms/step - loss: 1030.1827
+Epoch 12/20
+355/355 [==============================] - 125s 344ms/step - loss: 1009.1616
+Epoch 13/20
+355/355 [==============================] - 125s 344ms/step - loss: 992.2583
+Epoch 14/20
+355/355 [==============================] - 126s 347ms/step - loss: 979.4745
+Epoch 15/20
+355/355 [==============================] - 125s 344ms/step - loss: 963.2221
+Epoch 16/20
+355/355 [==============================] - 128s 351ms/step - loss: 950.4040
+Epoch 17/20
+355/355 [==============================] - 126s 345ms/step - loss: 939.8571
+Epoch 18/20
+355/355 [==============================] - 125s 345ms/step - loss: 932.0288
+Epoch 19/20
+355/355 [==============================] - 126s 348ms/step - loss: 924.5297
+Epoch 20/20
+355/355 [==============================] - 126s 345ms/step - loss: 913.3430
+Losses [<tf.Tensor 'VAE/mse_vae_output/Mean:0' shape=() dtype=float32>]
+1/1 [==============================] - 1s 1s/step
+(.venvwsl) root@BensPC:/home/ben/projects/faceVae# 
