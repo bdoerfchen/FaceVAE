@@ -1,5 +1,6 @@
-# Results
-_results/
+# VS Code
+.vscode/*
+!.vscode/launch.json 
 
 # virtual environments
 .venv*/
