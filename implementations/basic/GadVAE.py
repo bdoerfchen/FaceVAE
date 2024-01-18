@@ -28,7 +28,7 @@ class GadVAE():
         encoder_mean = keras.layers.Dense(units=latent_size, name="encoder_mean")(prelatent_dense)
         encoder_log_variance = keras.layers.Dense(units=latent_size, name="encoder_log_variance")(prelatent_dense)
 
-        latent_space = KLDivergenceLayer()([encoder_mean, encoder_log_variance]) # Does nothing but computes the kldivergence and adds loss
+        latent_space = KLDivergenceLossLayer()([encoder_mean, encoder_log_variance]) # Does nothing but computes the kldivergence and adds loss
 
         encoder = keras.models.Model(encoder_input, latent_space, name="encoder_model")
         encoder.summary()
@@ -56,9 +56,10 @@ class GadVAE():
         vae_latent = encoder(vae_input)
         vae_latent_sampled = VAESamplingLayer(name="vae_latent_sampled")(vae_latent) #keras.layers.Lambda(sampling, name="vae_latent_sampled")(vae_latent)
         vae_decoder_output = decoder(vae_latent_sampled)
-        vae = keras.models.Model(vae_input, vae_decoder_output, name="VAE")
+        vae_mse_output = MSEReconstructionLossLayer(name="mse_vae_output")([vae_input, vae_decoder_output])
+        vae = keras.models.Model(vae_input, vae_mse_output, name="VAE")
         vae.summary()
-        vae.compile(optimizer=optimizer, loss=vae_reconstruction_loss)
+        vae.compile(optimizer=optimizer)
 
         self.model = vae
         self.encoder = encoder
@@ -76,26 +77,16 @@ class GadVAE():
         assert os.path.exists(directory)
         gadVae = GadVAE()
         with CustomObjectScope({
-                'KLDivergenceLayer': KLDivergenceLayer,
-                'VAESamplingLayer': VAESamplingLayer,
-                'vae_reconstruction_loss': vae_reconstruction_loss
+                'KLDivergenceLossLayer': KLDivergenceLossLayer,
+                'MSEReconstructionLossLayer': MSEReconstructionLossLayer,
+                'VAESamplingLayer': VAESamplingLayer
             }):
             gadVae.model = keras.saving.load_model(os.path.join(directory, "vae.keras"), safe_mode=False)
             gadVae.encoder = keras.saving.load_model(os.path.join(directory, "vae_encoder.keras"), safe_mode=False)
             gadVae.decoder = keras.saving.load_model(os.path.join(directory, "vae_decoder.keras"), safe_mode=False)
         return gadVae
 
-    
 
-
-def vae_reconstruction_loss(y_true, y_predict):
-    reconstruction_loss_factor = 1000
-    diff = y_true-y_predict
-    reconstruction_loss = keras.backend.square(diff)
-    reconstruction_loss = keras.backend.mean(reconstruction_loss, axis=[1, 2, 3])
-                
-    l = reconstruction_loss_factor * reconstruction_loss
-    return l
 
 
 class VAESamplingLayer(keras.layers.Layer):
@@ -111,23 +102,42 @@ class VAESamplingLayer(keras.layers.Layer):
         dim = keras.backend.shape(mean)[1]
         epsilon = keras.backend.random_normal(shape=(batch, dim))
         return mean + keras.backend.exp(0.5 * log_variance) * epsilon
+
+class MSEReconstructionLossLayer(keras.layers.Layer):
+    
+    """ Layer that calculates the mean squared error between input and output. 
+    It expects [y_true, y_predict] and returns y_predict.
+    """
+    
+    def __init__(self, *args, **kwargs):
+        self.is_placeholder = True
+        super(MSEReconstructionLossLayer, self).__init__(*args, **kwargs)
+
+    def call(self, inputs):
+        y_true, y_predict = inputs
+
+        reconstruction_loss = keras.backend.square((y_true-y_predict)*255)
+        reconstruction_loss = keras.backend.mean(reconstruction_loss, axis=[0, 1, 2, 3])
+        self.add_loss(reconstruction_loss, inputs=inputs)
+        return y_predict
         
         
-class KLDivergenceLayer(keras.layers.Layer):
+class KLDivergenceLossLayer(keras.layers.Layer):
 
     """Identity transform layer that adds KL divergence
     to the final model loss.
     """
+    KL_LOSS_FACTOR = 1
 
     def __init__(self, *args, **kwargs):
         self.is_placeholder = True
-        super(KLDivergenceLayer, self).__init__(*args, **kwargs)
+        super(KLDivergenceLossLayer, self).__init__(*args, **kwargs)
 
     def call(self, inputs):
         mean, log_variance = inputs
 
-        kl_batch = keras.backend.sum(-0.5 * (1 + log_variance - keras.backend.square(mean) - keras.backend.exp(log_variance)), axis=-1)
-        self.add_loss(keras.backend.mean(kl_batch), inputs=inputs)
+        kl_batch = keras.backend.sum(-0.5 * (1 + log_variance - keras.backend.square(mean) - keras.backend.exp(log_variance)), axis=[1]) * 255
+        self.add_loss(keras.backend.mean(kl_batch * KLDivergenceLossLayer.KL_LOSS_FACTOR, axis=-1), inputs=inputs)
 
         return inputs
 

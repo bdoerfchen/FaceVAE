@@ -12,7 +12,7 @@ print("Found GPU(s):", found_gpus)
 
 from dataset import DatasetProvider
 
-
+tf.config.optimizer.set_jit(True) #Enable XLA
 BATCH_SIZE = 32
 
 def main(load_model = False, save_model = True):
@@ -36,8 +36,9 @@ def main(load_model = False, save_model = True):
 
     if not load_model:
         vae = GadVAE(img_shape=(384, 256, 3), latent_size=15)
-        earlyStopping = keras.callbacks.EarlyStopping(monitor='loss', patience=3, min_delta=1)
+        earlyStopping = keras.callbacks.EarlyStopping(monitor='loss', patience=1, min_delta=15)
         history = vae.fit(dataset, epochs=20, batch_size=BATCH_SIZE, callbacks=[earlyStopping])
+        print("Losses", vae.model.losses)
     else:
         vae = GadVAE.load_from_directory(".")
         
