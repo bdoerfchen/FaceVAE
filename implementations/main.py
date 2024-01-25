@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 import keras
 
-from basic.GadVAE import GadVAE
+from .BaseVAE import BaseVAE
 found_gpus = tf.config.list_physical_devices('GPU')
 print("Found GPU(s):", found_gpus)
 
@@ -35,12 +35,12 @@ def main(load_model = False, save_model = True):
     #vae = BasicVAE(dataset=dataset, image_shape=(384, 256, 3), latent_size=100)
 
     if not load_model:
-        vae = GadVAE(img_shape=(384, 256, 3), latent_size=15)
+        vae = BaseVAE(img_shape=(384, 256, 3), latent_size=15)
         earlyStopping = keras.callbacks.EarlyStopping(monitor='loss', patience=1, min_delta=15)
         history = vae.fit(dataset, epochs=20, batch_size=BATCH_SIZE, callbacks=[earlyStopping])
         print("Losses", vae.model.losses)
     else:
-        vae = GadVAE.load_from_directory(".")
+        vae = BaseVAE.load_from_directory(".")
         
     if save_model:
         vae.save(".")

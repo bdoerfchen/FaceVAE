@@ -4,87 +4,52 @@ from keras.utils import CustomObjectScope
 import tensorflow as tf
 import numpy as np
 
+from .descriptors.VAEDescriptor import VAEDescriptor
+
 # https://blog.paperspace.com/how-to-build-variational-autoencoder-keras/
 
 
-class GadVAE():
+class BaseVAE(keras.models.Model):
+    """The base class for all VAE models
 
-    def __init__(self, img_shape=(255, 255, 3), latent_size=100, optimizer : keras.optimizers.Optimizer = keras.optimizers.Adam()) -> None:
-        self.createModel(img_shape=img_shape, latent_size=latent_size, optimizer=optimizer)
-        pass
+    They need to be initialized with an descriptor, describing their internal structure and thus determining the VAE variant
+    """
 
-    def createModel(self, img_shape : list, latent_size : int, optimizer : keras.optimizers.Optimizer):
-        #   [ Encoder ]
-        encoder_input = keras.layers.Input(shape=img_shape, name="encoder_input")
-            
-        encoder_conv_1 = keras.layers.Conv2D(8, 3, activation="relu", strides=2, padding="same")(encoder_input)
-        encoder_conv_2 = keras.layers.Conv2D(16, 5, activation="relu", strides=2, padding="same")(encoder_conv_1)
+    def __init__(self, descriptor: VAEDescriptor, name: str = "VAE") -> None:
+        """Create a new VAE instance
 
-        beforeflattened_shape = keras.backend.int_shape(encoder_conv_2)[1:]
-        conv_flatten = keras.layers.Flatten()(encoder_conv_2)
+        Args:
+            descriptor (VAEDescriptor): An object describing the structure of the model, determines the kind of VAE
+            name (str): The name of the model
+        """
 
-        prelatent_dense = keras.layers.Dense(4*latent_size, name="encoder_prelatent", activation="relu")(conv_flatten)
-
-        encoder_mean = keras.layers.Dense(units=latent_size, name="encoder_mean")(prelatent_dense)
-        encoder_log_variance = keras.layers.Dense(units=latent_size, name="encoder_log_variance")(prelatent_dense)
-
-        latent_space = KLDivergenceLossLayer()([encoder_mean, encoder_log_variance]) # Does nothing but computes the kldivergence and adds loss
-
-        encoder = keras.models.Model(encoder_input, latent_space, name="encoder_model")
-        encoder.summary()
-
-        #   -----------
-        #   [ Decoder ]
-        decoder_input = keras.layers.Input(shape=(latent_size), name="decoder_input")
-
-        decoder_postlatent = keras.layers.Dense(4*latent_size, name="decoder_postlatent", activation="relu")(decoder_input)
-
-        # Restore convoluted layers
-        decoder_latent_redense = keras.layers.Dense(units=np.prod(beforeflattened_shape), name="decoder_latent_redense", activation="relu")(decoder_postlatent)
-        decoder_reshape = keras.layers.Reshape(target_shape=beforeflattened_shape)(decoder_latent_redense)
-
-        decoder_deconv_1 = keras.layers.Conv2DTranspose(16, 5, activation="relu", strides=2, padding="same")(decoder_reshape)
-        decoder_deconv_2 = keras.layers.Conv2DTranspose(8, 3, activation="relu", strides=2, padding="same")(decoder_deconv_1)
-        decoder_output = keras.layers.Conv2DTranspose(3, 3, activation="sigmoid", padding="same")(decoder_deconv_2)
-
-        decoder = keras.models.Model(decoder_input, decoder_output, name="decoder_model")
-        decoder.summary()
+        encoder, decoder = descriptor.createModel()
 
         #   -------
         #   [ VAE ]
-        vae_input = encoder_input
+        vae_input = encoder.layers[0]
         vae_latent = encoder(vae_input)
-        vae_latent_sampled = VAESamplingLayer(name="vae_latent_sampled")(vae_latent) #keras.layers.Lambda(sampling, name="vae_latent_sampled")(vae_latent)
+        vae_latent_sampled = VAESamplingLayer(name="vae_latent_sampled")(vae_latent)
         vae_decoder_output = decoder(vae_latent_sampled)
         vae_mse_output = MSEReconstructionLossLayer(name="mse_vae_output")([vae_input, vae_decoder_output])
-        vae = keras.models.Model(vae_input, vae_mse_output, name="VAE")
-        vae.summary()
-        vae.compile(optimizer=optimizer)
+        vae = keras.models.Model()
 
-        self.model = vae
-        self.encoder = encoder
-        self.decoder = decoder
+        super.__init__(self, vae_input, vae_mse_output, name=name)
+        pass
 
-    def fit(self, x, *args, **kwargs):
-        self.model.fit(x, *args, **kwargs)
+    def save(self, directory, file = "vae"):
+        self.model.save(os.path.join(directory, file + ".keras"), save_format="keras")
 
-    def save(self, directory):
-        self.model.save(os.path.join(directory, "vae.keras"), save_format="keras")
-        self.encoder.save(os.path.join(directory, "vae_encoder.keras"), save_format="keras")
-        self.decoder.save(os.path.join(directory, "vae_decoder.keras"), save_format="keras")
-
-    def load_from_directory(directory: str):
+    def load_from_directory(directory: str, file = "vae"):
         assert os.path.exists(directory)
-        gadVae = GadVAE()
+        vae = BaseVAE()
         with CustomObjectScope({
                 'KLDivergenceLossLayer': KLDivergenceLossLayer,
                 'MSEReconstructionLossLayer': MSEReconstructionLossLayer,
                 'VAESamplingLayer': VAESamplingLayer
             }):
-            gadVae.model = keras.saving.load_model(os.path.join(directory, "vae.keras"), safe_mode=False)
-            gadVae.encoder = keras.saving.load_model(os.path.join(directory, "vae_encoder.keras"), safe_mode=False)
-            gadVae.decoder = keras.saving.load_model(os.path.join(directory, "vae_decoder.keras"), safe_mode=False)
-        return gadVae
+            vae.model = keras.saving.load_model(os.path.join(directory, "vae.keras"), safe_mode=False)
+        return vae
 
 
 
