@@ -8,6 +8,7 @@ import keras
 
 from BaseVAE import BaseVAE
 from variants.ConvVAEDescriptor import ConvVAEDescriptor
+from variants.DenseVAEDescriptor import DenseVAEDescriptor
 
 found_gpus = tf.config.list_physical_devices('GPU')
 print("Found GPU(s):", found_gpus)
@@ -34,12 +35,11 @@ def main(load_model = False, save_model = False):
     val_images = tf.stack(val_images)
     
 
-    #vae = BasicVAE(dataset=dataset, image_shape=(384, 256, 3), latent_size=100)
-
     if not load_model:
-        vae = BaseVAE(ConvVAEDescriptor(img_shape=(384, 256, 3), latent_size=15), name="ConvVAE")
+        #vae = BaseVAE(ConvVAEDescriptor(img_shape=(384, 256, 3), latent_size=15), name="ConvVAE") #Conv
+        vae = BaseVAE(DenseVAEDescriptor(img_shape=(384, 256, 3), encoder_layer_units=[10], latent_size=10))
         vae.summary()
-        vae.compile(keras.optimizers.Adam())
+        vae.compile(keras.optimizers.SGD())
         earlyStopping = keras.callbacks.EarlyStopping(monitor='loss', patience=1, min_delta=15)
         history = vae.fit(dataset, epochs=1, batch_size=BATCH_SIZE, callbacks=[earlyStopping])
         print("Losses", vae.losses)
@@ -48,6 +48,10 @@ def main(load_model = False, save_model = False):
         
     if save_model:
         vae.save(".")
+
+    latent = vae.layers[1](val_images)
+    sampling = vae.layers[2](latent)
+    decoded = vae.layers[3](sampling)
 
     n_val_images = len(val_images)
     gen_images = vae.predict(val_images)
