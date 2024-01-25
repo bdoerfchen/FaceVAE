@@ -8,7 +8,7 @@ from .variants.VAEDescriptor import VAEDescriptor
 
 from .variants.layers.KLDivergenceLayer import KLDivergenceLossLayer
 from .variants.layers.MSEReconstructionLossLayer import MSEReconstructionLossLayer
-from .variants.layers.Sampling import VAESamplingLayer
+from .variants.layers.SamplingLayer import VAESamplingLayer
 
 
 # https://blog.paperspace.com/how-to-build-variational-autoencoder-keras/
