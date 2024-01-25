@@ -10,7 +10,8 @@
             "request": "launch",
             "program":  "./implementations/main.py", //"${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "showReturnValue": true,            
         }
     ]
 }

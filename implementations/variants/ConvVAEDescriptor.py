@@ -1,5 +1,9 @@
 import keras
+import numpy as np
+
 from .VAEDescriptor import VAEDescriptor
+
+from .layers.KLDivergenceLayer import KLDivergenceLossLayer
 
 class ConvVAEDescriptor(VAEDescriptor):
     

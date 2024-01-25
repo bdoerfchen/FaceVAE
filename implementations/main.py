@@ -6,7 +6,9 @@ import numpy as np
 from PIL import Image
 import keras
 
-from .BaseVAE import BaseVAE
+from BaseVAE import BaseVAE
+from variants.ConvVAEDescriptor import ConvVAEDescriptor
+
 found_gpus = tf.config.list_physical_devices('GPU')
 print("Found GPU(s):", found_gpus)
 
@@ -15,17 +17,17 @@ from dataset import DatasetProvider
 tf.config.optimizer.set_jit(True) #Enable XLA
 BATCH_SIZE = 32
 
-def main(load_model = False, save_model = True):
+def main(load_model = False, save_model = False):
 
-    dataset_meta = DatasetProvider.AvailableDatasets.COLORFERET
+    dataset_meta = DatasetProvider.AvailableDatasets.TEST
     if not load_model:
         dataset, path = DatasetProvider.loadDataset(dataset_meta, BATCH_SIZE)
         dataset = dataset.map(lambda x: (x/255, x/255))
     else:
         path = DatasetProvider.getPath(dataset_meta)
 
-    val_images = [ "00084/00084_931230_fb.ppm.png", "00114/00114_931230_fb.ppm.png", "00290/00290_940422_hl.ppm.png", "00551/00551_940519_fb.ppm.png", "00826/00826_940307_fa.ppm.png" ]
-    #val_images = [ "00300/00300_940422_fa.ppm.png", "00300/00300_940422_hl.ppm.png", "00300/00300_940422_pl.ppm.png", "00400/00400_940422_hl.ppm.png" ]
+    #val_images = [ "00084/00084_931230_fb.ppm.png", "00114/00114_931230_fb.ppm.png", "00290/00290_940422_hl.ppm.png", "00551/00551_940519_fb.ppm.png", "00826/00826_940307_fa.ppm.png" ]
+    val_images = [ "00300/00300_940422_fa.ppm.png", "00300/00300_940422_hl.ppm.png", "00300/00300_940422_pl.ppm.png", "00400/00400_940422_hl.ppm.png" ]
     val_images = list(map( 
         lambda x: tf.convert_to_tensor(Image.open(os.path.join(path, x)), dtype=tf.float32)/255, 
         val_images))
@@ -35,10 +37,12 @@ def main(load_model = False, save_model = True):
     #vae = BasicVAE(dataset=dataset, image_shape=(384, 256, 3), latent_size=100)
 
     if not load_model:
-        vae = BaseVAE(img_shape=(384, 256, 3), latent_size=15)
+        vae = BaseVAE(ConvVAEDescriptor(img_shape=(384, 256, 3), latent_size=15), name="ConvVAE")
+        vae.summary()
+        vae.compile(keras.optimizers.Adam())
         earlyStopping = keras.callbacks.EarlyStopping(monitor='loss', patience=1, min_delta=15)
-        history = vae.fit(dataset, epochs=20, batch_size=BATCH_SIZE, callbacks=[earlyStopping])
-        print("Losses", vae.model.losses)
+        history = vae.fit(dataset, epochs=1, batch_size=BATCH_SIZE, callbacks=[earlyStopping])
+        print("Losses", vae.losses)
     else:
         vae = BaseVAE.load_from_directory(".")
         
@@ -46,7 +50,7 @@ def main(load_model = False, save_model = True):
         vae.save(".")
 
     n_val_images = len(val_images)
-    gen_images = vae.model.predict(val_images)
+    gen_images = vae.predict(val_images)
     f, axes = plt.subplots(2, n_val_images, num="VAE validation")
     for i in range(n_val_images):
         _show_image_on_axis(axes[0, i], np.array(val_images[i]*255, dtype=np.uint8))
