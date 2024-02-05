@@ -2,7 +2,7 @@ import keras
 
 class VAEDescriptor:
     """
-    An object describing the structure of a VAE
+    An abstract class for describing the structure of a VAE
     """
     def __init__(self) -> None:
         pass
@@ -17,8 +17,8 @@ class VAEDescriptor:
             None
         
         Returns:
-            encoder (Model): The encoder model
-            decoder (Model): The decoder model
+            encoder (Model): The encoder model, whose output is the mean and log_variance latent space
+            decoder (Model): The decoder model, which expects an already sampled latent space
         """
         return (None,None)
     

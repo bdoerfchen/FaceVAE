@@ -53,5 +53,5 @@ class BaseVAE(keras.models.Model):
                 'MSEReconstructionLossLayer': MSEReconstructionLossLayer,
                 'VAESamplingLayer': VAESamplingLayer
             }):
-            vae : BaseVAE = keras.saving.load_model(os.path.join(directory, "vae.keras"), safe_mode=False)
+            vae : BaseVAE = keras.saving.load_model(os.path.join(directory, file + ".keras"), safe_mode=False)
         return vae

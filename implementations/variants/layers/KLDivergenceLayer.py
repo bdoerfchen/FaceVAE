@@ -14,7 +14,8 @@ class KLDivergenceLossLayer(keras.layers.Layer):
     def call(self, inputs):
         mean, log_variance = inputs
 
-        kl_batch = keras.backend.sum(-0.5 * (1 + log_variance - keras.backend.square(mean) - keras.backend.exp(log_variance)), axis=[1]) * 255
-        self.add_loss(keras.backend.mean(kl_batch * KLDivergenceLossLayer.KL_LOSS_FACTOR, axis=-1), inputs=inputs)
-
+        kl_batch = keras.backend.sum(-0.5 * (1 + log_variance - keras.backend.square(mean) - keras.backend.exp(log_variance)), axis=[1])
+        kl_loss = keras.backend.mean(kl_batch * KLDivergenceLossLayer.KL_LOSS_FACTOR, axis=-1)
+        self.add_loss(kl_loss, inputs=inputs)
+        self.add_metric(kl_loss, name="kl_loss")
         return inputs

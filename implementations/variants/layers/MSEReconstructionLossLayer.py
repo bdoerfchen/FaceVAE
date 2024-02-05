@@ -13,7 +13,8 @@ class MSEReconstructionLossLayer(keras.layers.Layer):
     def call(self, inputs):
         y_true, y_predict = inputs
 
-        reconstruction_loss = keras.backend.square((y_true-y_predict)*255)
+        reconstruction_loss = keras.backend.square((y_true-y_predict)*100)
         reconstruction_loss = keras.backend.mean(reconstruction_loss, axis=[0, 1, 2, 3])
         self.add_loss(reconstruction_loss, inputs=inputs)
+        self.add_metric(reconstruction_loss, name="mse_loss")
         return y_predict

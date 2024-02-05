@@ -6,17 +6,18 @@ import keras
 import tensorflow
 
 class DatasetSchema:
-    def __init__(self, path, size) -> None:
+    def __init__(self, path, size, val_images) -> None:
         self.path = path
         self.size = size
+        self.val_images = val_images
         pass
 
 class DatasetProvider:    
 
     class AvailableDatasets:
-        COLORFERET = DatasetSchema("feret", (384, 256))
-        FFHQ256 = DatasetSchema("ffhq256", (256, 256))
-        TEST = DatasetSchema("test", (384, 256))
+        COLORFERET: DatasetSchema = DatasetSchema("feret", (384, 256, 3), [ "00084/00084_931230_fb.ppm.png", "00114/00114_931230_fb.ppm.png", "00290/00290_940422_hl.ppm.png", "00551/00551_940519_fb.ppm.png", "00826/00826_940307_fa.ppm.png" ])
+        FFHQ256: DatasetSchema = DatasetSchema("ffhq256", (256, 256, 3), [ "00312.png", "41923.png", "12491.png", "41293.png", "34122.png", "54112.png", "25199.png", "50292.png"])
+        TEST: DatasetSchema = DatasetSchema("test", (384, 256, 3), [ "00300/00300_940422_fa.ppm.png", "00300/00300_940422_hl.ppm.png", "00300/00300_940422_pl.ppm.png", "00400/00400_940422_hl.ppm.png" ])
         
 
     def getPath(dataset: AvailableDatasets):
@@ -30,6 +31,7 @@ class DatasetProvider:
 
     def loadDataset(dataset: AvailableDatasets, batch_size = 64) -> tensorflow.data.Dataset:
         dir = DatasetProvider.getPath(dataset)
+        size = list(dataset.size[0:2])
         assert os.path.exists(dir)
         dataset = keras.utils.image_dataset_from_directory(
             dir,
@@ -38,7 +40,7 @@ class DatasetProvider:
             class_names=None,
             color_mode="rgb",
             batch_size=batch_size,
-            image_size=dataset.size,
+            image_size=size,
             shuffle=True,
             seed=None,
             validation_split=None,
