@@ -1,6 +1,7 @@
 # VS Code
 .vscode/*
 !.vscode/launch.json 
+models/
 
 # virtual environments
 .venv*/

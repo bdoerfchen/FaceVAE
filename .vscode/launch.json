@@ -6,9 +6,18 @@
     "configurations": [
         {
             "name": "Python: VAE Main",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program":  "./implementations/main.py", //"${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "showReturnValue": true,            
+        },
+        {
+            "name": "Python: Train",
+            "type": "debugpy",
+            "request": "launch",
+            "program":  "./implementations/batch_train.py", //"${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
             "showReturnValue": true,            
