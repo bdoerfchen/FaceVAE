@@ -125,4 +125,4 @@ class ValidationSnapshotCallback(keras.callbacks.Callback):
         gen_val_images = self.model(self.val_images)
         for i in range(len(gen_val_images)):
             filename = "e" + str(epoch) + "_" + str(i) + ".png"
-            saveImage(os.path.join(self.directory, filename))
+            saveImage(gen_val_images[i], os.path.join(self.directory, filename))

@@ -43,15 +43,11 @@ class BaseVAE(keras.models.Model):
         return
 
     def save_to_directory(self, directory, file = "vae") -> None:
-        self.save(os.path.join(directory, file + ".tf"), save_format="tf")
+        self.save(os.path.join(directory, file + ".keras"), save_format="keras")
         return
 
-    def load_from_directory(directory: str, file = "vae") -> Self:
+    def load_from_directory(descriptor, directory: str, file = "vae") -> Self:
         assert os.path.exists(directory)
-        with CustomObjectScope({
-                'KLDivergenceLossLayer': KLDivergenceLossLayer,
-                'MSEReconstructionLossLayer': MSEReconstructionLossLayer,
-                'VAESamplingLayer': VAESamplingLayer
-            }):
-            vae : BaseVAE = keras.saving.load_model(os.path.join(directory, file + ".tf"), safe_mode=False)
+        vae = BaseVAE(descriptor)
+        vae.load_weights(os.path.join(directory, file + ".keras"))
         return vae

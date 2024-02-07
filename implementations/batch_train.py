@@ -25,7 +25,7 @@ LOG_FILE = "stdout.log"
 RESULT_FILE = "result.json"
 
 
-MODEL_VERSION = "finaldense"
+MODEL_VERSION = "testsave"
 RESULT_PATH = "./models/" + MODEL_VERSION + "/"
 SOFTSTOP_PATH = os.path.join(RESULT_PATH, "softstop.txt")
 def setup() -> bool:
@@ -105,12 +105,11 @@ def main():
                             result.dump(RESULT_FILE)
 
                             # Validate model saving
-                            valVae = BaseVAE.load_from_directory(variation_path)
+                            valVae = BaseVAE.load_from_directory(configuration.descriptor, variation_path)
                             gen_val_images = valVae(val_images)
                             for i in range(len(gen_val_images)):
-                                gen_image = np.array(gen_val_images[i]*255, dtype=np.uint8) # Load image from array and denormalize
-                                filename = "val_" + str(i) + ".png"
-                                Image.fromarray(gen_image).save(os.path.join(variation_path, filename), format="png")
+                                val_path = os.path.join(variation_path, "val" + str(i) + ".png")
+                                saveImage(gen_val_images[i], val_path)
 
                     except Exception as error:
                         print("Exception while running")
