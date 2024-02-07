@@ -43,7 +43,7 @@ class BaseVAE(keras.models.Model):
         return
 
     def save_to_directory(self, directory, file = "vae") -> None:
-        self.save(os.path.join(directory, file + ".keras"), save_format="keras")
+        self.save(os.path.join(directory, file + ".tf"), save_format="tf")
         return
 
     def load_from_directory(directory: str, file = "vae") -> Self:
@@ -53,5 +53,5 @@ class BaseVAE(keras.models.Model):
                 'MSEReconstructionLossLayer': MSEReconstructionLossLayer,
                 'VAESamplingLayer': VAESamplingLayer
             }):
-            vae : BaseVAE = keras.saving.load_model(os.path.join(directory, file + ".keras"), safe_mode=False)
+            vae : BaseVAE = keras.saving.load_model(os.path.join(directory, file + ".tf"), safe_mode=False)
         return vae
